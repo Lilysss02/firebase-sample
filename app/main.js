@@ -2,6 +2,8 @@
 const messaging = firebase.messaging();
 
 if ('serviceWorker' in navigator) {
+  // Service Workerを使うためにregister()関数を呼び出して登録
+  //（firebase-messaging-sw.jsが存在する階層が自動的に設定される）
   navigator.serviceWorker.register('./firebase-messaging-sw.js').then(registration => {    
     console.log(registration);
     messaging.useServiceWorker(registration);
