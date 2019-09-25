@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
-var key = 'サーバーキー';
-var to = 'トークン';
+var key = '';
+var to = '';
 var notification = {
   'title': 'プッシュ通知',
   'body': 'テストテストテスト',
