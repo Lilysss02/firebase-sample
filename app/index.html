@@ -102,6 +102,20 @@
     // appendMessage(payload);
   });
 
+  function requestPermission() {
+    console.log('Requesting permission...');
+    // [START request_permission]
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        console.log('通知が許可されました');
+        // TODO(developer): FCMで使用するトークンの取得
+        resetUI();
+      } else {
+        console.log('通知が許可されていません');
+      }
+    });
+  }
+
   // 表示の更新
   function resetUI() {
     showToken('loading...');
@@ -112,7 +126,6 @@
 
         updateUIForPushEnabled(currentToken);
       } else {
-        // Needs Permissionボタンを表示
         // No Instance ID token available. Request permission to generate one.
         console.log('使用可能なトークンがありません。通知許可のリクエストを送ってください。');
         // Needs Permissionボタンの表示
@@ -121,7 +134,7 @@
       }
     }).catch((err) => {
       console.log('トークン取得中にエラーが発生しました ', err);
-      updateUIForPushPermissionRequired();
+      
       showToken('トークン取得エラー ', err);
       setTokenSentToServer(false);
     });
@@ -150,20 +163,6 @@
     window.localStorage.setItem('sentToServer', sent ? '1' : '0');
   }
 
-  function requestPermission() {
-    console.log('Requesting permission...');
-    // [START request_permission]
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        console.log('通知が許可されました');
-        // TODO(developer): FCMで使用するトークンの取得
-        resetUI();
-      } else {
-        console.log('通知が許可されていません');
-      }
-    });
-  }
-
   function deleteToken() {
     // [delete_token]トークンの削除
     messaging.getToken().then((currentToken) => {
@@ -182,25 +181,6 @@
       showToken('トークンの取得エラー ', err);
     });
   }
-
-  // push通知のメッセージ内容を表示
-//   function appendMessage(payload) {
-//     const messagesElement = document.querySelector('#messages');
-//     const dataHeaderELement = document.createElement('h5');
-//     const dataElement = document.createElement('pre');
-//     dataElement.style = 'overflow-x:hidden;';
-//     dataHeaderELement.textContent = 'Received message:';
-//     dataElement.textContent = JSON.stringify(payload, null, 2);
-//     messagesElement.appendChild(dataHeaderELement);
-//     messagesElement.appendChild(dataElement);
-//   }
-
-//   function clearMessages() {
-//     const messagesElement = document.querySelector('#messages');
-//     while (messagesElement.hasChildNodes()) {
-//       messagesElement.removeChild(messagesElement.lastChild);
-//     }
-//   }
 
   function showHideDiv(divId, show) {
     const div = document.querySelector('#' + divId);
@@ -231,6 +211,26 @@
     showHideDiv(permissionDivId, true);
   }
   resetUI();
+
+//   push通知のメッセージ内容を表示
+//   function appendMessage(payload) {
+//     const messagesElement = document.querySelector('#messages');
+//     const dataHeaderELement = document.createElement('h5');
+//     const dataElement = document.createElement('pre');
+//     dataElement.style = 'overflow-x:hidden;';
+//     dataHeaderELement.textContent = 'Received message:';
+//     dataElement.textContent = JSON.stringify(payload, null, 2);
+//     messagesElement.appendChild(dataHeaderELement);
+//     messagesElement.appendChild(dataElement);
+//   }
+
+//   function clearMessages() {
+//     const messagesElement = document.querySelector('#messages');
+//     while (messagesElement.hasChildNodes()) {
+//       messagesElement.removeChild(messagesElement.lastChild);
+//     }
+//   }
+
 </script>
 </body>
 </html>
