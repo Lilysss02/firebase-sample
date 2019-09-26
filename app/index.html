@@ -32,13 +32,15 @@
       <!-- Container for the Table of content -->
       <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--12-col-desktop">
         <div class="mdl-card__supporting-text mdl-color-text--grey-600">
-          <!-- div to display the generated Instance ID token -->
+
+          <!-- 生成されたトークンを表示する -->
           <div id="token_div" style="display: none;">
             <h4>Instance ID Token</h4>
             <p id="token" style="word-break: break-all;"></p>
             <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
                     onclick="deleteToken()">Delete Token</button>
           </div>
+
           <div id="notification">
               <h3>NOTIFICATION</h3>
               <p class="notice"></p>
@@ -46,16 +48,15 @@
               <button id="RemoveButton" onClick="removeSubscription()">プッシュ通知を解除する</button>
           </div>
 
-          <!-- div to display the UI to allow the request for permission to
-               notify the user. This is shown if the app has not yet been
-               granted permission to notify. -->
+          <!-- push通知が許可されていない場合に表示されるNeeds Permissionボタン -->
           <div id="permission_div" style="display: none;">
             <h4>Needs Permission</h4>
             <p id="token"></p>
             <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
                     onclick="requestPermission()">Request Permission</button>
           </div>
-          <!-- div to display messages received by this app. -->
+
+          <!-- push通知で受け取った内容を表示 -->
           <div id="messages"></div>
         </div>
       </div>
@@ -65,8 +66,6 @@
 </div>
 
 <!-- Firebase SDK -->
-<!-- These scripts are made available when the app is served or deployed on Firebase Hosting -->
-<!-- If you do not serve/host your project using Firebase Hosting see https://firebase.google.com/docs/web/setup -->
 <script src="/__/firebase/6.3.3/firebase-app.js"></script>
 <script src="/__/firebase/6.3.3/firebase-messaging.js"></script>
 <script src="/__/firebase/6.3.3/firebase-firestore.js"></script>
@@ -74,21 +73,17 @@
 
 
 <script>
-  // [START get_messaging_object]
-  // メッセージングオブジェクトの取得
+  // [get_messaging_object]メッセージングオブジェクトの取得
   const messaging = firebase.messaging();
-  // [END get_messaging_object]
 
-  // [START set_public_vapid_key]
-  // ウェブ認証情報を設定
+  // [set_public_vapid_key]ウェブ認証情報を設定
   messaging.usePublicVapidKey('BJJUVrXYaadcWrsEfLjLxwKME0eLtoSDZhw-diflwelcPwkLqEhBTvHQJgyrLFenAMfHZ1jBEgWtg4Ql4sKx2ow');
-  // [END set_public_vapid_key]
   
-  // IDs of divs that display Instance ID token UI or request permission UI.
+  // トークン、RequestPermissionボタンのdivタグのid
   const tokenDivId = 'token_div';
   const permissionDivId = 'permission_div';
-  // [START refresh_token]
-  // トークン更新：新しいトークンが生成されるたびにonTokenRefreshが呼び出され、最新の登録トークンにアクセス
+
+  // [refresh_token]新しいトークンが生成されるたびにonTokenRefreshが呼び出され、最新の登録トークンにアクセス
   messaging.onTokenRefresh(() => {
     messaging.getToken().then((refreshedToken) => {
       console.log('トークンが更新されました');
@@ -96,43 +91,39 @@
       setTokenSentToServer(false);
       // 更新されたトークンをサーバーへ保存
       sendTokenToServer(refreshedToken);
-      // [START_EXCLUDE]
       
       // 新しいトークンを表示
       resetUI();
-      // [END_EXCLUDE]
+
     }).catch((err) => {
-      console.log('Unable to retrieve refreshed token ', err);
-      showToken('Unable to retrieve refreshed token ', err);
+      console.log('更新されたトークンを取得できません ', err);
+      showToken('更新されたトークンを取得できません ', err);
     });
   });
-  // [END refresh_token]
 
-  // [START receive_message]
-  // アプリがフォアグラウンドにある場合
+  // [receive_message]アプリがフォアグラウンドにある場合
   messaging.onMessage((payload) => {
     console.log('Message received. ', payload);
-    // [START_EXCLUDE]
-    // メッセージを追記
+
+    // Received message欄にメッセージを追記
     appendMessage(payload);
-    // [END_EXCLUDE]
+
   });
-  // [END receive_message]
-  
+
 
   function resetUI() {
     clearMessages();
     showToken('loading...');
-    // [START get_token]
-    // getTokenを呼び出し、現在の登録トークンの取得
+    // [get_token]getTokenを呼び出し、現在の登録トークンの取得
     messaging.getToken().then((currentToken) => {
       if (currentToken) {
+        // 現在のトークンをサーバーに送信
         sendTokenToServer(currentToken);
         updateUIForPushEnabled(currentToken);
       } else {
-        // Show permission request.
+        // 通知を許可するリクエスト
         console.log('No Instance ID token available. Request permission to generate one.');
-        // Show permission UI.
+        // Needs Permissionボタンの表示
         updateUIForPushPermissionRequired();
         setTokenSentToServer(false);
       }
@@ -141,14 +132,18 @@
       showToken('トークン取得エラー', err);
       setTokenSentToServer(false);
     });
-    // [END get_token]
   }
 
-  // トークンの表示
-  function showToken(currentToken) {
-    // Show token in console and UI.
-    var tokenElement = document.querySelector('#token');
-    tokenElement.textContent = currentToken;
+  function isTokenSentToServer() {
+    // getItem()でlocalStorageからデータを取り出す
+    // setItem()で指定したkeyを引数に指定
+    return window.localStorage.getItem('sentToServer') === '1';
+  }
+  
+  function setTokenSentToServer(sent) {
+    // setItem()でlocalStorageにデータを保存
+    // 第1引数にkey、第2引数に値
+    window.localStorage.setItem('sentToServer', sent ? '1' : '0');
   }
   
   // トークンをサーバーに送信
@@ -159,72 +154,50 @@
       setTokenSentToServer(true);
     } else {
       // トークンはすでにサーバーに送信されているため、変更しない限り再度送信することはありません
-      console.log('Token already sent to server so won\'t send it again unless it changes');
+      console.log('トークンはすでにサーバーに送信されているため、変更がない限り再送信することはありません');
     }
   }
 
-  function isTokenSentToServer() {
-    // getItem()でlocalStorageからデータを取り出す
-    // setItem()で指定したkeyを引数に指定
-    return window.localStorage.getItem('sentToServer') === '1';
-  }
-  function setTokenSentToServer(sent) {
-    // setItem()でlocalStorageにデータを保存
-    // 第1引数にkey、第2引数に値
-    window.localStorage.setItem('sentToServer', sent ? '1' : '0');
-  }
-
-  function showHideDiv(divId, show) {
-    const div = document.querySelector('#' + divId);
-    if (show) {
-      div.style = 'display: visible';
-    } else {
-      div.style = 'display: none';
-    }
-  }
-
-  // 通知の受信許可をリクエスト
+  // Needs Pemissionボタンが押された時
   function requestPermission() {
     console.log('Requesting permission...');
-    // [START request_permission]
+    // [request_permission]通知の受信許可をリクエスト
     Notification.requestPermission().then((permission) => {
       if (permission === 'granted') {
         console.log('通知が許可されました');
         // TODO(developer): FCMで使用するインスタンスIDトークンを取得
-        // [START_EXCLUDE]
-        // In many cases once an app has been granted notification permission,
-        // it should update its UI reflecting this.
+
+        // push通知が許可された後、UIを更新
         resetUI();
-        // [END_EXCLUDE]
+
       } else {
         console.log('通知が許可されませんでした');
       }
     });
-    // [END request_permission]
   }
 
+  // DELETE TOKENボタンが押された時
   function deleteToken() {
-    // トークンの削除
-    // [START delete_token]
+    // [delete_token]トークンの削除
     messaging.getToken().then((currentToken) => {
       messaging.deleteToken(currentToken).then(() => {
         console.log('トークンを削除しました');
         setTokenSentToServer(false);
-        // [START_EXCLUDE]
+
         // Once token is deleted update UI.
         resetUI();
-        // [END_EXCLUDE]
+
       }).catch((err) => {
         console.log('トークンを削除できません ', err);
       });
-      // [END delete_token]
+
     }).catch((err) => {
-      console.log('Error retrieving Instance ID token. ', err);
-      showToken('Error retrieving Instance ID token. ', err);
+      console.log('トークン取得エラー ', err);
+      showToken('トークン取得エラー ', err);
     });
   }
 
-  // Add a message to the messages element.
+  // Received message欄に受け取った通知の内容を表示
   function appendMessage(payload) {
     const messagesElement = document.querySelector('#messages');
     const dataHeaderELement = document.createElement('h5');
@@ -236,7 +209,7 @@
     messagesElement.appendChild(dataElement);
   }
 
-  // 通知メッセージの詳細
+  // 通知内容
   function clearMessages() {
     const messagesElement = document.querySelector('#messages');
     // 指定したノードが子ノードを持つかを示す
@@ -247,14 +220,36 @@
     }
   }
 
+  // 表示・非表示の処理
+  function showHideDiv(divId, show) {
+    const div = document.querySelector('#' + divId);
+    if (show) {
+      div.style = 'display: visible';
+    } else {
+      div.style = 'display: none';
+    }
+  }
+  
+  // トークンの表示
+  function showToken(currentToken) {
+    var tokenElement = document.querySelector('#token');
+    tokenElement.textContent = currentToken;
+  }
+
+  // 現在のトークンを取得
   function updateUIForPushEnabled(currentToken) {
     showHideDiv(tokenDivId, true);
+    // Needs Permissionボタンを非表示
     showHideDiv(permissionDivId, false);
+    // 取得したトークンを表示
     showToken(currentToken);
   }
   
+  // Needs Permissionボタンの表示
   function updateUIForPushPermissionRequired() {
+    // トークンを非表示
     showHideDiv(tokenDivId, false);
+    // Needs Permissionボタンを表示
     showHideDiv(permissionDivId, true);
   }
   resetUI();
