@@ -1,7 +1,12 @@
 const fetch = require('node-fetch');
 
+<<<<<<< HEAD
 var key = 'AAAAeucTVq8:APA91bFzhpJOJXNmSL8RGtKWG8ylwHlQDBKyQtHfDzF8LSlEDwXmyYK0bUx7urpzVVq_k7WMGHuXYZk9VtnAl0hiIrIyM83mkoQHsrCVza7zv6BetCWcrwDAXW8tIzQ00rsPRZ2BQJNH';
 var to = 'cfkNs5UDQD0:APA91bGNwmTeUp2Wf2SdH7JmVui_uojPzeiDL7jtiC9IEII4e8uDAPKaTU4dvSr_22WYhY0K5IkFrqQlDWhYTzjhezq_gwdguXUGEBRxSGz1WKsy6rx9Yl50MJAnV7zYeqdMOU8yEXJc';
+=======
+var key = '';
+var to = '';
+>>>>>>> 07451d4437adc24dc0841e973d9a8001b62367ba
 var notification = {
   'title': 'プッシュ通知',
   'body': 'テストテストテスト',

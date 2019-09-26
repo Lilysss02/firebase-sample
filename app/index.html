@@ -61,7 +61,9 @@
 <!-- Firebase SDK -->
 <script src="/__/firebase/6.3.3/firebase-app.js"></script>
 <script src="/__/firebase/6.3.3/firebase-messaging.js"></script>
+<script src="/__/firebase/6.3.3/firebase-firestore.js"></script>
 <script src="/__/firebase/init.js"></script>
+
 
 <script>
   // [get_messaging_object]
@@ -137,16 +139,20 @@
   }
   
   function isTokenSentToServer() {
+    // getItem()でlocalStorageからデータを取り出す
+    // setItem()で指定したkeyを引数に指定
     return window.localStorage.getItem('sentToServer') === '1';
   }
   
   function setTokenSentToServer(sent) {
+    // setItem()でlocalStorageにデータを保存
+    // 第1引数にkey、第2引数に値
     window.localStorage.setItem('sentToServer', sent ? '1' : '0');
   }
 
   function requestPermission() {
     console.log('Requesting permission...');
-    // [START request_permission] 通知の受信許可をリクエスト
+    // [START request_permission]
     Notification.requestPermission().then((permission) => {
       if (permission === 'granted') {
         console.log('通知が許可されました');
@@ -218,7 +224,6 @@
     // トークンを表示
     showToken(currentToken);
   }
-
   function updateUIForPushPermissionRequired() {
     // トークン非表示
     showHideDiv(tokenDivId, false);

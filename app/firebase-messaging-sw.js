@@ -2,6 +2,7 @@ importScripts('/__/firebase/5.5.6/firebase-app.js');
 importScripts('/__/firebase/5.5.6/firebase-messaging.js');
 importScripts('/__/firebase/init.js');
 
+// メッセージングオブジェクトの取得
 var messaging = firebase.messaging();
 
 messaging.setBackgroundMessageHandler(function(payload) {
