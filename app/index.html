@@ -15,244 +15,57 @@
   <link rel="manifest" href="/manifest.json">
 </head>
 <body>
-<div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header">
+  <div class="demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-header">
 
-  <!-- Header section containing title -->
-  <header class="mdl-layout__header mdl-color-text--white mdl-color--light-blue-700">
-    <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-grid">
-      <div class="mdl-layout__header-row mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--8-col-desktop">
-        <h3>Firebase Cloud Messaging</h3>
-      </div>
-    </div>
-  </header>
-
-  <main class="mdl-layout__content mdl-color--grey-100">
-    <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-grid">
-
-      <!-- Container for the Table of content -->
-      <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--12-col-desktop">
-        <div class="mdl-card__supporting-text mdl-color-text--grey-600">
-
-          <!-- 生成されたトークンを表示する -->
-          <div id="token_div" style="display: none;">
-            <h4>Instance ID Token</h4>
-            <p id="token" style="word-break: break-all;"></p>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
-                    onclick="deleteToken()">Delete Token</button>
-          </div>
-
-          <div id="notification">
-              <h3>NOTIFICATION</h3>
-              <p class="notice"></p>
-              <button id="EntryButton" onClick="getSubscription()">プッシュ通知を受け取る</button>
-              <button id="RemoveButton" onClick="removeSubscription()">プッシュ通知を解除する</button>
-          </div>
-
-          <!-- push通知が許可されていない場合に表示されるNeeds Permissionボタン -->
-          <div id="permission_div" style="display: none;">
-            <h4>Needs Permission</h4>
-            <p id="token"></p>
-            <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
-                    onclick="requestPermission()">Request Permission</button>
-          </div>
-
-          <!-- push通知で受け取った内容を表示 -->
-          <div id="messages"></div>
+    <!-- Header section containing title -->
+    <header class="mdl-layout__header mdl-color-text--white mdl-color--light-blue-700">
+      <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-grid">
+        <div class="mdl-layout__header-row mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--8-col-desktop">
+          <h3>Firebase Cloud Messaging</h3>
         </div>
       </div>
+    </header>
 
-    </div>
-  </main>
-</div>
+    <main class="mdl-layout__content mdl-color--grey-100">
+      <div class="mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-grid">
 
-<!-- Firebase SDK -->
-<script src="/__/firebase/6.3.3/firebase-app.js"></script>
-<script src="/__/firebase/6.3.3/firebase-messaging.js"></script>
-<script src="/__/firebase/6.3.3/firebase-firestore.js"></script>
-<script src="/__/firebase/init.js"></script>
+        <!-- Container for the Table of content -->
+        <div class="mdl-card mdl-shadow--2dp mdl-cell mdl-cell--12-col mdl-cell--12-col-tablet mdl-cell--12-col-desktop">
+          <div class="mdl-card__supporting-text mdl-color-text--grey-600">
+            
+              <!-- トークン表示 -->
+            <div id="token_div" style="display: none;">
+              <h4>Instance ID Token</h4>
+              <p id="token" style="word-break: break-all;"></p>
+              <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                  onclick="deleteToken()">Delete Token</button>
+              <button id="removeButton"
+                  class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                  onclick="removeNotification()">Cancel Notification</button>
+            </div>
+            
+            <!-- Needs Permissionボタン表示 -->
+            <div id="permission_div" style="display: none;">
+              <h4>Needs Permission</h4>
+              <p id="token"></p>
+              <button id="entryButton"
+                  class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                  onclick="requestPermission()">Request Permission</button>
+              </button>
+            </div>
+            
+            <!-- プッシュ通知のメッセージ内容表示 -->
+            <div id="messages"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
 
-
-<script>
-  // [get_messaging_object]メッセージングオブジェクトの取得
-  const messaging = firebase.messaging();
-
-  // [set_public_vapid_key]ウェブ認証情報を設定
-  messaging.usePublicVapidKey('BJJUVrXYaadcWrsEfLjLxwKME0eLtoSDZhw-diflwelcPwkLqEhBTvHQJgyrLFenAMfHZ1jBEgWtg4Ql4sKx2ow');
-  
-  // トークン、RequestPermissionボタンのdivタグのid
-  const tokenDivId = 'token_div';
-  const permissionDivId = 'permission_div';
-
-  // [refresh_token]新しいトークンが生成されるたびにonTokenRefreshが呼び出され、最新の登録トークンにアクセス
-  messaging.onTokenRefresh(() => {
-    messaging.getToken().then((refreshedToken) => {
-      console.log('トークンが更新されました');
-      
-      setTokenSentToServer(false);
-      // 更新されたトークンをサーバーへ保存
-      sendTokenToServer(refreshedToken);
-      
-      // 新しいトークンを表示
-      resetUI();
-
-    }).catch((err) => {
-      console.log('更新されたトークンを取得できません ', err);
-      showToken('更新されたトークンを取得できません ', err);
-    });
-  });
-
-  // [receive_message]アプリがフォアグラウンドにある場合
-  messaging.onMessage((payload) => {
-    console.log('Message received. ', payload);
-
-    // Received message欄にメッセージを追記
-    appendMessage(payload);
-
-  });
-
-
-  function resetUI() {
-    clearMessages();
-    showToken('loading...');
-    // [get_token]getTokenを呼び出し、現在の登録トークンの取得
-    messaging.getToken().then((currentToken) => {
-      if (currentToken) {
-        // 現在のトークンをサーバーに送信
-        sendTokenToServer(currentToken);
-        updateUIForPushEnabled(currentToken);
-      } else {
-        // 通知を許可するリクエスト
-        console.log('No Instance ID token available. Request permission to generate one.');
-        // Needs Permissionボタンの表示
-        updateUIForPushPermissionRequired();
-        setTokenSentToServer(false);
-      }
-    }).catch((err) => {
-      console.log('トークン取得中にエラーが発生しました ', err);
-      showToken('トークン取得エラー', err);
-      setTokenSentToServer(false);
-    });
-  }
-
-  function isTokenSentToServer() {
-    // getItem()でlocalStorageからデータを取り出す
-    // setItem()で指定したkeyを引数に指定
-    return window.localStorage.getItem('sentToServer') === '1';
-  }
-  
-  function setTokenSentToServer(sent) {
-    // setItem()でlocalStorageにデータを保存
-    // 第1引数にkey、第2引数に値
-    window.localStorage.setItem('sentToServer', sent ? '1' : '0');
-  }
-  
-  // トークンをサーバーに送信
-  function sendTokenToServer(currentToken) {
-    if (!isTokenSentToServer()) {
-      console.log('Sending token to server...');
-      // TODO(developer): 現在のトークンをサーバーに送信
-      setTokenSentToServer(true);
-    } else {
-      // トークンはすでにサーバーに送信されているため、変更しない限り再度送信することはありません
-      console.log('トークンはすでにサーバーに送信されているため、変更がない限り再送信することはありません');
-    }
-  }
-
-  // Needs Pemissionボタンが押された時
-  function requestPermission() {
-    console.log('Requesting permission...');
-    // [request_permission]通知の受信許可をリクエスト
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        console.log('通知が許可されました');
-        // TODO(developer): FCMで使用するインスタンスIDトークンを取得
-
-        // push通知が許可された後、UIを更新
-        resetUI();
-
-      } else {
-        console.log('通知が許可されませんでした');
-      }
-    });
-  }
-
-  // DELETE TOKENボタンが押された時
-  function deleteToken() {
-    // [delete_token]トークンの削除
-    messaging.getToken().then((currentToken) => {
-      messaging.deleteToken(currentToken).then(() => {
-        console.log('トークンを削除しました');
-        setTokenSentToServer(false);
-
-        // Once token is deleted update UI.
-        resetUI();
-
-      }).catch((err) => {
-        console.log('トークンを削除できません ', err);
-      });
-
-    }).catch((err) => {
-      console.log('トークン取得エラー ', err);
-      showToken('トークン取得エラー ', err);
-    });
-  }
-
-  // Received message欄に受け取った通知の内容を表示
-  function appendMessage(payload) {
-    const messagesElement = document.querySelector('#messages');
-    const dataHeaderELement = document.createElement('h5');
-    const dataElement = document.createElement('pre');
-    dataElement.style = 'overflow-x:hidden;';
-    dataHeaderELement.textContent = 'Received message:';
-    dataElement.textContent = JSON.stringify(payload, null, 2);
-    messagesElement.appendChild(dataHeaderELement);
-    messagesElement.appendChild(dataElement);
-  }
-
-  // 通知内容
-  function clearMessages() {
-    const messagesElement = document.querySelector('#messages');
-    // 指定したノードが子ノードを持つかを示す
-    while (messagesElement.hasChildNodes()) {
-      // lastChild : ノードの子要素の内、最後のものを返す
-      console.log(messagesElement.lastChild);
-      messagesElement.removeChild(messagesElement.lastChild);
-    }
-  }
-
-  // 表示・非表示の処理
-  function showHideDiv(divId, show) {
-    const div = document.querySelector('#' + divId);
-    if (show) {
-      div.style = 'display: visible';
-    } else {
-      div.style = 'display: none';
-    }
-  }
-  
-  // トークンの表示
-  function showToken(currentToken) {
-    var tokenElement = document.querySelector('#token');
-    tokenElement.textContent = currentToken;
-  }
-
-  // 現在のトークンを取得
-  function updateUIForPushEnabled(currentToken) {
-    showHideDiv(tokenDivId, true);
-    // Needs Permissionボタンを非表示
-    showHideDiv(permissionDivId, false);
-    // 取得したトークンを表示
-    showToken(currentToken);
-  }
-  
-  // Needs Permissionボタンの表示
-  function updateUIForPushPermissionRequired() {
-    // トークンを非表示
-    showHideDiv(tokenDivId, false);
-    // Needs Permissionボタンを表示
-    showHideDiv(permissionDivId, true);
-  }
-  resetUI();
-</script>
+  <!-- Firebase SDK -->
+  <script src="/__/firebase/6.3.3/firebase-app.js"></script>
+  <script src="/__/firebase/6.3.3/firebase-messaging.js"></script>
+  <script src="/__/firebase/init.js"></script>
+  <script src="./main.js"></script>
 </body>
 </html>

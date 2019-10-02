@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "firebase-admin": "^8.6.0",
-    "node-fetch": "^2.6.0"
+    "firebase": "^7.0.0"
   }
 }
