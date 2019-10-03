@@ -1,13 +1,17 @@
 const fetch = require('node-fetch');
 
-var key = '';
-var to = '';
+var key = 'APIキー';
+var to = '取得したトークン';
 var notification = {
-  'title': 'プッシュ通知',
-  'body': 'テストテストテスト',
-  'icon': 'app-icon-192.png',
-  'click_action': 'https://cogent-reach-253302.firebaseapp.com/'
-};
+  webpush: {
+    title: 'プッシュ通知',
+    body: 'テストテストテスト',
+    icon: '/images/app-icon-192.png'
+  },
+  fcm_options: {
+    link: 'https://pwa-push-254609.firebaseapp.com/'
+  }
+}
 
 fetch('https://fcm.googleapis.com/fcm/send', {
   'method': 'POST',
@@ -23,4 +27,4 @@ fetch('https://fcm.googleapis.com/fcm/send', {
   console.log(response);
 }).catch(function(error) {
   console.error(error);
-})
+});
