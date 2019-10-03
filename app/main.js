@@ -61,7 +61,7 @@ function resetUI() {
 function setTokenSentToServer(currentToken) {
     console.log(currentToken);
 
-    fetch('http://127.0.0.1:8001/api/pushes', {
+    fetch('http://127.0.0.1:8000/api/pushes', {
         method: 'POST',
         body: JSON.stringify({
             token: currentToken
