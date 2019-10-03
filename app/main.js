@@ -6,23 +6,6 @@ messaging.usePublicVapidKey('BH9Wm2qcd1V_p3FEPY3rPab5mXpqom5kwuWUMhbmxSNNqCyPa-a
 const tokenDivId = 'token_div';
 const permissionDivId = 'permission_div';
 
-// [refresh_token]新しいトークンが生成されるたびにonTokenRefreshが呼び出され、最新の登録トークンにアクセス
-// messaging.onTokenRefresh(() => {
-//     messaging.getToken().then((refreshedToken) => {
-//         console.log('トークンを更新しました');
-//         // トークンがサーバーに送信されていない場合ためfalse
-//         setTokenSentToServer(false);
-//         // トークンをサーバーに送信
-//         sendTokenToServer(refreshedToken);
-//         // 新しいトークンの表示と表示されていたpush通知のメッセージ内容をクリア
-//         resetUI();
-//     }).catch((err) => {
-//         console.log('トークンを更新できませんでした ', err);
-//         showToken('トークンを更新できませんでした ', err);
-//     });
-// });
-
-// [receive_message]
 // アプリがフォアグラウンドにある場合
 messaging.onMessage((payload) => {
 console.log('Message received. ', payload);
@@ -30,56 +13,54 @@ console.log('Message received. ', payload);
 
 // 通知許可リクエスト
 function requestPermission() {
-console.log('Requesting permission...');
-// [START request_permission]
-Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-    console.log('通知が許可されました');
-    // FCMで使用するトークンの取得
-    resetUI();
-    } else {
-    console.log('通知が許可されていません');
-    }
-});
+    console.log('Requesting permission...');
+    Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+        console.log('通知が許可されました');
+        // FCMで使用するトークンの取得
+        resetUI();
+        } else {
+        console.log('通知が許可されていません');
+        }
+    });
 }
 
 // 通知解除ボタン
-function removeNotification() {
-Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-        deleteToken();
-    }
-})
-}
+// function removeNotification() {
+//     Notification.requestPermission().then((permission) => {
+//         if (permission === 'granted') {
+//             deleteToken();
+//         }
+//     })
+// }
 
 // 表示の更新
 function resetUI() {
-showToken('loading...');
-// [get_token] 現在の登録トークンの取得
-messaging.getToken().then((currentToken) => {
-    if (currentToken) {
-        setTokenSentToServer(currentToken);
-        // sendTokenToServer(currentToken);
-        updateUIForPushEnabled(currentToken);
-    } else {
-        // No Instance ID token available. Request permission to generate one.
-        console.log('使用可能なトークンがありません。通知許可のリクエストを送ってください。');
-        // Needs Permissionボタンの表示
-        updateUIForPushPermissionRequired();
-        setTokenSentToServer(false);
-    }
-}).catch((err) => {
-    console.log('トークン取得中にエラーが発生しました ', err);
-    
-    showToken('トークン取得エラー ', err);
-    // setTokenSentToServer(false);
-});
+    showToken('loading...');
+    // [get_token] 現在の登録トークンの取得
+    messaging.getToken().then((currentToken) => {
+        if (currentToken) {
+            setTokenSentToServer(currentToken);
+            // sendTokenToServer(currentToken);
+            updateUIForPushEnabled(currentToken);
+        } else {
+            // No Instance ID token available. Request permission to generate one.
+            console.log('使用可能なトークンがありません。通知許可のリクエストを送ってください。');
+            // Needs Permissionボタンの表示
+            updateUIForPushPermissionRequired();
+            setTokenSentToServer(false);
+        }
+    }).catch((err) => {
+        console.log('トークン取得中にエラーが発生しました ', err);
+        
+        showToken('トークン取得エラー ', err);
+        // setTokenSentToServer(false);
+    });
 }
 
 function setTokenSentToServer(currentToken) {
-    let veryLongText = '';
-    const decoder = new TextDecoder();
     console.log(currentToken);
+
     fetch('http://127.0.0.1:8001/api/pushes', {
         method: 'POST',
         body: JSON.stringify({
@@ -91,68 +72,28 @@ function setTokenSentToServer(currentToken) {
             // リクエストメソッドはOPTIONSになる
             'Content-Type': 'application/json',
         },
-    }).then(response => response.body.getReader())
-        .then(reader => {
-            function readChunk({done, value}) {
-                if(done) {
-                    console.log(veryLongText);
-                    return;
-                }
-                veryLongText += decoder.decode(value);
-
-                reader.read().then(readChunk);
-            }
-            reader.read().then(readChunk);
-        });
+    // レスポンスのJSONを解析
+    }).then(res => res.json())
+      .then(console.log)
+      .catch(console.error);
 }
 
-// function isTokenSentToServer() {
-//     fetch('http://127.0.0.1:8001/api/pushes' + this.pushes.id).then(res => {
-//         this.push = res.data;
-//     });
-// }
-
-
-// // 取得したトークンをサーバーへ送信
-// function sendTokenToServer(currentToken) {
-// if (!isTokenSentToServer()) {
-//     console.log('Sending token to server...');
-//     setTokenSentToServer(true);
-//     console.log(currentToken);
-// } else {
-//     // Token already sent to server so won\'t send it again unless it changes'
-//     console.log('トークンはすでにサーバーに送られているため、変更がない限り再送信されません');
-//     }
-// }
-
-// // function isTokenSentToServer() {
-// // // getItem()でlocalStorageからデータを取り出す
-// // // setItem()で指定したkeyを引数に指定
-// // return window.localStorage.getItem('sentToServer') === '1';
-// // }
-
-// // function setTokenSentToServer(sent) {
-// // // setItem()でlocalStorageにデータを保存
-// // // 第1引数にkey、第2引数に値
-// // window.localStorage.setItem('sentToServer', sent ? '1' : '0');
-// // }
-
 function deleteToken() {
-// [delete_token]トークンの削除
-messaging.getToken().then((currentToken) => {
-    messaging.deleteToken(currentToken).then(() => {
-    console.log('トークンを削除しました');
-    setTokenSentToServer(false);
-    
-    // トークンを削除し表示を更新
-    resetUI();
+    // [delete_token]トークンの削除
+    messaging.getToken().then((currentToken) => {
+        messaging.deleteToken(currentToken).then(() => {
+            console.log('トークンを削除しました');
+            setTokenSentToServer(false);
+            
+            // トークンを削除しRequestPermissionボタンを表示
+            updateUIForPushPermissionRequired()
+        }).catch((err) => {
+            console.log('トークンを削除できません ', err);
+        });
     }).catch((err) => {
-    console.log('トークンを削除できません ', err);
+        console.log('トークンの取得エラー ', err);
+        showToken('トークンの取得エラー ', err);
     });
-}).catch((err) => {
-    console.log('トークンの取得エラー ', err);
-    showToken('トークンの取得エラー ', err);
-});
 }
 
 function showHideDiv(divId, show) {
@@ -179,10 +120,10 @@ function updateUIForPushEnabled(currentToken) {
 }
 
 function updateUIForPushPermissionRequired() {
-// トークン非表示
-showHideDiv(tokenDivId, false);
-// Needs Permissionボタンを表示
-showHideDiv(permissionDivId, true);
+    // トークン非表示
+    showHideDiv(tokenDivId, false);
+    // Needs Permissionボタンを表示
+    showHideDiv(permissionDivId, true);
 }
 
 resetUI();
